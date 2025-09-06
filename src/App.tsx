@@ -78,14 +78,12 @@ const App = () => {
       }
 
       const data = await response.json();
-      console.log("API Response:", data); // Debug log
       setResult(data);
       setShowResult(true);
-    } catch (err) {
+    } catch {
       setError(
         "Failed to classify the relationship. Please check your connection and try again."
       );
-      console.error("Classification error:", err);
     } finally {
       setLoading(false);
     }
@@ -349,7 +347,7 @@ const App = () => {
 
                 {/* Main Result Display */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-100">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                     <div className="flex items-center space-x-4">
                       <div className="text-4xl">
                         {getResultDisplay(result.relationship).icon}
@@ -366,11 +364,12 @@ const App = () => {
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-left md:text-right">
                       <div className="text-sm text-gray-500 mb-2">
                         Confidence Level
                       </div>
-                      <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="w-full md:w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
+                        {/* Dynamic width requires inline style */}
                         <div
                           className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-1000 ease-out"
                           style={{
