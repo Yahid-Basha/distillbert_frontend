@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const App = () => {
   // State management
@@ -6,15 +6,20 @@ const App = () => {
   const [productDescription, setProductDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
-    relationship: string;
-    confidence: number;
+    predictions: Array<{
+      relationship: string;
+      confidence: number;
+    }>;
+    best_prediction: {
+      relationship: string;
+      confidence: number;
+    };
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
 
   // API configuration - using environment variable with fallback
-  const API_URL =
-    import.meta.env.VITE_API_URL || "https://distillbert-backend.onrender.com";
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
   // Example data for one-click testing
   const examples = [
@@ -35,9 +40,9 @@ const App = () => {
     {
       type: "Complement",
       icon: "➕",
-      query: "Samsung S23 FE",
+      query: "airpods",
       description:
-        "Spigen Ultra Hybrid Phone Case [Anti-Yellowing] designed to be compatible with Samsung Galaxy S23 FE.",
+        "Estuche de Carga Inalámbrica con Botón de Sincronización Compatible con AirPods 1 y 2 Reemplazo con Emparejamiento Bluetooth (Air Pods no Incluidas), Cubierta Protectora para Auriculares (Blanco)  Lopnord",
     },
     {
       type: "Irrelevant",
@@ -79,6 +84,7 @@ const App = () => {
       }
 
       const data = await response.json();
+      console.log("API Response:", data); // Debug log
       setResult(data);
       setShowResult(true);
     } catch (err) {
@@ -110,7 +116,7 @@ const App = () => {
   };
 
   // Get display information for results
-  const getResultDisplay = (relationship: string, confidence: number) => {
+  const getResultDisplay = (relationship: string) => {
     const displays: Record<
       string,
       { icon: string; color: string; interpretation: string }
@@ -329,7 +335,7 @@ const App = () => {
               </button>
             </div>
 
-            {result && (
+            {result && result.best_prediction && result.predictions && (
               <div className="space-y-6">
                 {/* Query and Description Display */}
                 <div className="grid lg:grid-cols-2 gap-6 mb-8">
@@ -347,26 +353,30 @@ const App = () => {
                   </div>
                 </div>
 
-                {/* Main Result Display */}
+                {/* Best Prediction Display */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-100">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <span className="mr-2">🏆</span>
+                    Best Prediction
+                  </h3>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="text-4xl">
                         {
-                          getResultDisplay(
-                            result.relationship,
-                            result.confidence
-                          ).icon
+                          getResultDisplay(result.best_prediction.relationship)
+                            .icon
                         }
                       </div>
                       <div>
                         <div
-                          className={`text-2xl font-bold capitalize ${getResultDisplay(result.relationship, result.confidence).color}`}
+                          className={`text-2xl font-bold capitalize ${getResultDisplay(result.best_prediction.relationship).color}`}
                         >
-                          {result.relationship} Match
+                          {result.best_prediction.relationship} Match
                         </div>
                         <div className="text-lg text-gray-600">
-                          Confidence: {(result.confidence * 100).toFixed(1)}%
+                          Confidence:{" "}
+                          {(result.best_prediction.confidence * 100).toFixed(1)}
+                          %
                         </div>
                       </div>
                     </div>
@@ -377,13 +387,56 @@ const App = () => {
                       </div>
                       <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
                         <div
-                          className={`h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-1000 ease-out`}
+                          className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-1000 ease-out"
                           style={{
-                            width: `${result.confidence * 100}%`,
+                            width: `${result.best_prediction.confidence * 100}%`,
                           }}
                         ></div>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* All Predictions Display */}
+                <div className="bg-gray-50 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <span className="mr-2">📊</span>
+                    All Predictions
+                  </h3>
+                  <div className="space-y-3">
+                    {result.predictions.map((prediction, index) => (
+                      <div
+                        key={index}
+                        className="bg-white rounded-lg p-4 border border-gray-200 hover:border-gray-300 transition-all duration-200"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-2xl">
+                              {getResultDisplay(prediction.relationship).icon}
+                            </span>
+                            <div>
+                              <div
+                                className={`font-semibold capitalize ${getResultDisplay(prediction.relationship).color}`}
+                              >
+                                {prediction.relationship}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {(prediction.confidence * 100).toFixed(1)}%
+                                confidence
+                              </div>
+                            </div>
+                          </div>
+                          <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-gray-400 to-gray-500 transition-all duration-1000 ease-out"
+                              style={{
+                                width: `${prediction.confidence * 100}%`,
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -395,7 +448,7 @@ const App = () => {
                   </h3>
                   <p className="text-gray-700 leading-relaxed">
                     {
-                      getResultDisplay(result.relationship, result.confidence)
+                      getResultDisplay(result.best_prediction.relationship)
                         .interpretation
                     }
                   </p>
@@ -414,6 +467,27 @@ const App = () => {
                   <div className="p-4 bg-red-50 rounded-lg">
                     <div className="font-semibold text-red-800">Low</div>
                     <div className="text-sm text-red-600">Below 60%</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Fallback for unexpected API response structure */}
+            {result && (!result.best_prediction || !result.predictions) && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+                <div className="flex items-center space-x-3">
+                  <span className="text-2xl">⚠️</span>
+                  <div>
+                    <div className="font-semibold text-yellow-800">
+                      Unexpected API Response
+                    </div>
+                    <p className="text-yellow-600 mt-1">
+                      The API returned an unexpected response format. Raw
+                      response:
+                    </p>
+                    <pre className="mt-2 p-2 bg-yellow-100 rounded text-xs overflow-auto">
+                      {JSON.stringify(result, null, 2)}
+                    </pre>
                   </div>
                 </div>
               </div>
