@@ -19,7 +19,8 @@ const App = () => {
   const [showResult, setShowResult] = useState(false);
 
   // API configuration - using environment variable with fallback
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const API_URL =
+    import.meta.env.VITE_API_URL || "https://distillbert-backend.onrender.com";
 
   // Example data for one-click testing
   const examples = [
